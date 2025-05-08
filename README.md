@@ -1,80 +1,187 @@
-## Corelab Challenge:
+# To-do List
 
-You are tasked with building a web application that allows users to create and manage their to-do lists. The application should consist of a responsive webpage built in React, and an API built in PHP Laravel to store and manage the to-do lists.
+Este repositório contém uma API desenvolvida em Laravel.
 
-### The repositories
-The [frontend repository](https://github.com/corelabbr/corelab-challenge-web-app-php)
+## Requisitos
 
-If you feel more comfortable, you can pick another React framework and show us your skills.
+Antes de iniciar, certifique-se de ter os seguintes requisitos instalados:
 
-The [backend repository](https://github.com/corelabbr/corelab-api-challenge-php)
+- PHP 8.4+
+- Composer
+- PostgreSQL
+- Laravel 10+
+- Docker (opcional, para ambiente conteinerizado)
 
-If you feel more comfortable, you can pick another PHP framework and show us your skills.
+## Instalação
 
-### The Layout
-Open the [layout mockup](https://www.figma.com/file/sQrUVHTlyogq3qGdkqGTXN/mockup?node-id=7%3A2&t=ANTOTiqjqGWYuoUr-0) in desktop and mobile version and follow this design as much as possible.
+1. Clone o repositório:
+   ```sh
+   git clone https://github.com/Tielson/desafio-corelab.git
+   cd desafio-corelab/corelab-api-challenge-php
+   ```
 
-### The application should have the following functionality:
+2. Instale as dependências:
+   ```sh
+   composer install
+   ```
 
-1. Users should be able to create, read, update, and delete to-do items using the API.
-2. Users should be able to mark an item as a favorite.
-3. Users should be able to set a color for each to-do item.
-4. The React frontend should display the user's to-do list in a responsive and visually appealing manner, with the ability to filter by favorite items and color.
-5. The favorited items should be displayed at the top of the list.
+3. Copie o arquivo de configuração e configure as variáveis de ambiente:
+   ```sh
+   cp .env.example .env
+   ```
+   Atualize o `.env` com as informações do banco de dados, por exemplo:
+   ```env
+   DB_CONNECTION=pgsql
+   DB_HOST=127.0.0.1
+   DB_PORT=5432
+   DB_DATABASE=corelab
+   DB_USERNAME=seu_usuario
+   DB_PASSWORD=sua_senha
+   ```
 
-### Technical Requirements:
-1. The backend API should be built in PHP Laravel framework and use a database of your choice (e.g., MySQL, PostgreSQL, etc.).
-2. The frontend should be built in React and use modern web development tools and best practices.
-3. The application should be responsive and visually appealing.
+4. Gere a chave da aplicação:
+   ```sh
+   php artisan key:generate
+   ```
 
-### Deliverables:
-1. A link to a GitHub repository containing the complete source code for the project.
-2. A written description of how to set up and run the application locally.
+5. Execute as migrações e seeders:
+   ```sh
+   php artisan migrate:fresh --seed
+   ```
 
-### Evaluation Criteria:
-1. Code Quality
-2. Code Format
-3. Code Performance
-4. Frontend Design
-5. If your code is Easily Readable
-6. Mobile First approach
-7. Code Responsibility
-8. Features Work
-9. Responsiveness
-10. Does the application meet the functionality requirements listed above?
-11. Is the code well-organized, easy to read, and well-documented?
-12. Are modern web development tools and best practices used?
-13. Is the application visually appealing and responsive?
+## Uso
 
-### Backend
-Repository: 
-1. PHP: ^7.4
-2. Laravel: ^8.0
-3. Database: Choose your own, you can even use PostgreSQL.
+Para iniciar o servidor local, execute:
+```sh
+php artisan serve
+```
+A API estará disponível em `http://127.0.0.1:8000`
 
-### Frontend
-Repository: 
-1. Node: ^16.15.0
-2. NPM: ^8.5.5
-3. Framework: React TS
-4. Sass or other preprocessor
+### Testando a API
 
-### Want to impress us even more?
-If you feel comfortable and want to impress us even more, you can do the following:
+Você pode usar **Postman**, **Insomnia** ou **cURL** para testar os endpoints.
 
-1. Work on correct types and interfaces
-2. Work on eslint rules
-3. Work prettier config
-4. Work on docker containers
-5. Work on tests
-6. Work on CI/CD
+Exemplo de requisição para listar itens:
+```sh
+curl -X GET http://127.0.0.1:8000/api/items
+```
 
-### What to do when you finish?
+## Estrutura do Projeto
 
-Create a file PULL_REQUEST.md where you will describe what you did and how in as much detail as possible. Feel free to add videos for better explanation.
+- `app/Models/Item.php` - Modelo principal para os itens.
+- `database/migrations/` - Arquivos de migração do banco de dados.
+- `database/seeders/ItemsSeeder.php` - Seeder para popular o banco.
+- `routes/api.php` - Definição das rotas da API.
 
-Create a new pull request using the same branch name for Backend and Frontend
+## Problemas Comuns
 
-Send us the pull requests and that's all!
+- **Erro ao rodar os seeders**: Certifique-se de que o `ItemsSeeder` está no diretório `database/seeders/` e rode:
+  ```sh
+  composer dump-autoload
+  php artisan db:seed --class=ItemsSeeder
+  ```
 
-#### Good luck! The sky is the limit 🚀
+- **Banco de dados não populado**: Rode o seguinte comando:
+  ```sh
+  php artisan migrate:fresh --seed
+  ```
+
+## Docker Configuration
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_react_app
+    networks:
+      - app_network
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+      - /var/www/vendor  # Add this to preserve container's vendor dir
+      - /var/www/node_modules
+    ports:
+      - "8000:8000"  # Laravel
+      - "5173:5173"  # React
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_KEY
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    networks:
+      - app_network
+    container_name: laravel_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: laravel
+      POSTGRES_USER: filipe
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_INITDB_ARGS: "--auth-host=md5 --auth-local=md5"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  db_data:
+networks:
+  app_network:
+    driver: bridge
+```
+
+## Dockerfile
+
+```dockerfile
+FROM php:8.2-cli
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libpq-dev \  
+    libzip-dev \
+    unzip \
+    curl \
+    git \
+    && docker-php-ext-install zip pdo pdo_pgsql  # Instalando os drivers do PostgreSQL
+
+# Install Node.js 18.x
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install -y nodejs
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Set working directory
+WORKDIR /var/www
+
+# Copy ONLY Composer files first
+COPY composer.json ./
+
+# Install PHP dependencies (optimized layer caching)
+RUN composer install --no-interaction --no-scripts
+
+# Copy the rest of the application files
+COPY . .
+
+# Install PHP dependencies properly
+RUN composer install --no-interaction && \
+    composer dump-autoload --optimize
+
+# Node.js dependencies
+RUN npm install --force && \
+    npm run build
+
+# Expose ports
+EXPOSE 8000 5173
+
+# Start commands
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=8000 & npm run dev"]
+```
